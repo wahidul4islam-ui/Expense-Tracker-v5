@@ -35,10 +35,15 @@ jobs:
       - name: Create Android project
         run: |
           npm init -y
-          npm install @capacitor/core@7 @capacitor/cli@7 @capacitor/android@7
+          npm install @capacitor/core@7 @capacitor/cli@7 @capacitor/android@7 @capacitor-community/speech-recognition@7
           npx cap init "Expense Tracker" com.wahidul.expensetracker --web-dir www
           npx cap add android
           npx cap sync android
+
+      - name: Allow microphone
+        run: |
+          sed -i 's#</manifest>#    <uses-permission android:name="android.permission.RECORD_AUDIO" />\n    <queries><intent><action android:name="android.speech.RecognitionService" /></intent></queries>\n</manifest>#' android/app/src/main/AndroidManifest.xml
+          grep -n "RECORD_AUDIO\|RecognitionService" android/app/src/main/AndroidManifest.xml
 
       - name: Set app icon
         run: |
@@ -51,6 +56,14 @@ jobs:
               convert www/icon-512.png -resize ${s}x${s} $RES/mipmap-$n/$f.png
             done
           done
+
+      - name: Dark splash screen
+        run: |
+          RES=android/app/src/main/res
+          printf '<?xml version="1.0" encoding="utf-8"?>\n<shape xmlns:android="http://schemas.android.com/apk/res/android" android:shape="rectangle"><solid android:color="#00000000"/><size android:width="1dp" android:height="1dp"/></shape>\n' > $RES/drawable/zsplash.xml
+          find $RES -name 'splash.png' -exec convert -size 480x800 xc:'#0b1410' {} \;
+          sed -i '/NoActionBarLaunch/,/<\/style>/ s|</style>|    <item name="windowSplashScreenBackground">#0b1410</item>\n    <item name="windowSplashScreenAnimatedIcon">@drawable/zsplash</item>\n</style>|' $RES/values/styles.xml
+          cat $RES/values/styles.xml
 
       - name: Build APK
         run: |
