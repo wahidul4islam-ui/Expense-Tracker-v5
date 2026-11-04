@@ -20,11 +20,13 @@ jobs:
           distribution: temurin
           java-version: 17
 
-      - uses: android-actions/setup-android@v3
+      - name: Accept Android licenses (SDK is preinstalled)
+        continue-on-error: true
+        run: yes | "$ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager" --licenses || true
 
       # Optional but important: keeps the same signing key every build,
       # so the new APK installs OVER the old app and your data stays.
-      # Create secret DEBUG_KEYSTORE_BASE64 once (see README below).
+      # Create secret DEBUG_KEYSTORE_BASE64 once (see README-APK.txt).
       - name: Use fixed signing key
         env:
           K: ${{ secrets.DEBUG_KEYSTORE_BASE64 }}
@@ -68,3 +70,6 @@ jobs:
           ./gradlew assembleDebug
 
       - uses: actions/upload-artifact@v4
+        with:
+          name: expense-tracker-apk
+          path: android/app/build/outputs/apk/debug/app-debug.apk
